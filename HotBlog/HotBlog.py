@@ -6,26 +6,28 @@ import random
 
 
 class HotBlog(object):
-    # Store the first ten urls of baidu search pages
-    url_pattern = "http://www.baidu.com/s?ie=utf-8&wd={wd}"
-
-    def __index__(self, csdn_id):
-        self.id = csdn_id
+    url_pattern = "http://www.baidu.com/s?ie=utf-8&pn={pn}&wd={wd}"
 
     def get_page(self, url):
-        page = ul.urlopen(url)
-        bytes = page.read()
-        return bytes.decode("utf-8")
+        contents = ""
+        try:
+            page = ul.urlopen(url, timeout=5)
+            contents = page.read()
+        except Exception:
+            print("Connection timeout!")
+        return contents.decode("utf-8")
 
-    def scan_page(self, np, wd):
+    def scan_page(self, pn, wd):
         headers = {
             'User-Agent': 'Mozilla/5.0 (Windows; U; Windows NT 6.1; en-US; rv:1.9.1.6) Gecko/20091201 Firefox/3.5.6'}
-        html = HotBlog().get_page(self.url_pattern.format(np=np, wd=wd))
+        html = self.get_page(self.url_pattern.format(pn=pn, wd=wd))
         soup = BeautifulSoup(html, "lxml")
         blog_title_pattern = re.compile(".*- DRFish - 博客频道 - CSDN.NET$")
-        for target in soup.find_all(id=re.compile("tools_*")):
+        for target in soup.find_all(id=re.compile("tools_[0-9]*_[1-9]")):
             data_tools = target.attrs["data-tools"]
             parts = data_tools.split('","url":"')
+            if len(parts) != 2:
+                continue
             title = parts[0][10:]
             url = parts[1][:-2]
 
@@ -37,9 +39,5 @@ class HotBlog(object):
                 print("visit:" + title)
 
     def scan_n_pages(self, n, wd):
-        for i in range(1, n):
+        for i in range(n):
             self.scan_page(10 * i, wd)
-
-
-if __name__ == "__main__":
-    HotBlog().scan_page(10, "csdn%20drfish")
