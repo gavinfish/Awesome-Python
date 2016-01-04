@@ -3,6 +3,7 @@ from bs4 import BeautifulSoup
 from bs4 import SoupStrainer
 import random
 import time
+import re
 
 
 class CSDNVisitor(object):
@@ -28,7 +29,7 @@ class CSDNVisitor(object):
         targets = soup.find_all(with_class)
         for target in targets:
             a = target.contents[0]
-            title = a.string
+            title = a.string.strip()
             url = self.base_url + a["href"]
             random.seed(time.time())
             time.sleep(random.uniform(random.random() * 2, random.random() * 50))
@@ -36,13 +37,19 @@ class CSDNVisitor(object):
             ul.urlopen(request)
             print("visit:" + title)
 
-    def get_page_count(self):
-        return 2
+    def get_page_count(self, url):
+        content = self.get_page(url)
+        page_count_match = re.search("共[0-9]*页", content)
+        if not page_count_match:
+            return 0
+        page_count = int(page_count_match.group()[1:-1])
+        return page_count
 
-    def scan_pages(self,url):
-        page_count = self.get_page_count()
+    def scan_pages(self, url):
+        page_count = self.get_page_count(url)
         for i in range(page_count):
-            self.scan_page(url+(i+1))
+            self.scan_page(url + str(i + 1))
+
 
 if __name__ == "__main__":
-    CSDNVisitor().scan_page("http://blog.csdn.net/u013291394/article/list/")
+    CSDNVisitor().scan_pages("http://blog.csdn.net/u013291394/article/list/")
