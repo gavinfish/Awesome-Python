@@ -9,7 +9,7 @@ class HotBlog(object):
     url_pattern = "http://www.baidu.com/s?ie=utf-8&pn={pn}&wd={wd}"
 
     def get_page(self, url):
-        contents = ""
+        contents = b""
         try:
             page = ul.urlopen(url, timeout=5)
             contents = page.read()
