@@ -9,7 +9,7 @@ import re
 class CSDNVisitor(object):
     headers = {
         'User-Agent': 'Mozilla/5.0 (Windows; U; Windows NT 6.1; en-US; rv:1.9.1.6) Gecko/20091201 Firefox/3.5.6'}
-
+    base_list_url = "http://blog.csdn.net/{id}/article/list/"
     base_url = "http://blog.csdn.net"
 
     def get_page(self, url):
@@ -22,11 +22,13 @@ class CSDNVisitor(object):
             print("Connection timeout!")
         return contents.decode("utf-8")
 
-    def scan_page(self, url):
-        content = self.get_page(url)
+    def scan_page(self, url, n):
+        target_url = url + str(n)
+        content = self.get_page(target_url)
         soup = BeautifulSoup(content, "lxml")
         with_class = SoupStrainer(class_="link_title")
         targets = soup.find_all(with_class)
+        print("----- 开始访问第" + str(n) + "页内容 -----")
         for target in targets:
             a = target.contents[0]
             title = a.string.strip()
@@ -36,6 +38,7 @@ class CSDNVisitor(object):
             request = ul.Request(url, headers=self.headers)
             ul.urlopen(request)
             print("visit:" + title)
+        print("----- 结束访问第" + str(n) + "页内容 -----")
 
     def get_page_count(self, url):
         content = self.get_page(url)
@@ -48,8 +51,13 @@ class CSDNVisitor(object):
     def scan_pages(self, url):
         page_count = self.get_page_count(url)
         for i in range(page_count):
-            self.scan_page(url + str(i + 1))
+            self.scan_page(url, i + 1)
+
+    def interpret(self):
+        print("这个脚本可以访问CSDN博客主页中的所有文章。")
+        id = input("请输入你的CSDN的id号：\n")
+        self.scan_pages(self.base_list_url.format(id=id))
 
 
 if __name__ == "__main__":
-    CSDNVisitor().scan_pages("http://blog.csdn.net/u013291394/article/list/")
+    CSDNVisitor().interpret()
