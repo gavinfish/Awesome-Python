@@ -19,11 +19,9 @@ class InstructType(Enum):
     TRUNC = "trunc"
 
 
-variable_map = {}
-
-
 class Instruction(object):
-    None
+    def refresh_variable(self, variable_map):
+        None
 
 
 class InstructionFactory(object):
@@ -78,6 +76,7 @@ class AllocateInstruction(Instruction):
         self.type = values[3]
         self.align_width = values[-1]
 
+    def refresh_variable(self, variable_map):
         variable_map[self.target] = self.target
 
     def __str__(self):
@@ -100,6 +99,7 @@ class StoreInstruction(Instruction):
         self.target_type = values[3]
         self.align_width = values[-1]
 
+    def refresh_variable(self, variable_map):
         r = self.source if self.source not in variable_map else variable_map[self.source]
         variable_map[self.target] = variable_map[self.target].replace(self.target, r)
 
@@ -122,6 +122,7 @@ class LoadInstruction(Instruction):
         self.source_type = values[3]
         self.aligh_width = values[-1]
 
+    def refresh_variable(self, variable_map):
         variable_map[self.target] = variable_map[self.source]
 
     def __str__(self):
@@ -141,11 +142,11 @@ class ReturnInstruction(Instruction):
 
     def __str__(self):
         # description = "return " + self.target
-        expression = variable_map[self.target].replace("%", "")
-        if expression[0] is "(" and expression[-1] is ")":
-            expression = expression[1:-1]
-        description = "y = " + expression
-
+        # expression = variable_map[self.target].replace("%", "")
+        # if expression[0] is "(" and expression[-1] is ")":
+        #     expression = expression[1:-1]
+        # description = "y = " + expression
+        description = ""
         return description
 
 
@@ -161,6 +162,7 @@ class ADDInstruction(Instruction):
         self.left = values[-2]
         self.right = values[-1]
 
+    def refresh_variable(self, variable_map):
         l = self.left if self.left not in variable_map else variable_map[self.left]
         r = self.right if self.right not in variable_map else variable_map[self.right]
         variable_map[self.target] = "(" + l + "+" + r + ")"
@@ -182,6 +184,7 @@ class SUBInstruction(Instruction):
         self.left = values[-2]
         self.right = values[-1]
 
+    def refresh_variable(self, variable_map):
         l = self.left if self.left not in variable_map else variable_map[self.left]
         r = self.right if self.right not in variable_map else variable_map[self.right]
         variable_map[self.target] = "(" + l + "-" + r + ")"
@@ -203,6 +206,7 @@ class MULInstruction(Instruction):
         self.left = values[-2]
         self.right = values[-1]
 
+    def refresh_variable(self, variable_map):
         l = self.left if self.left not in variable_map else variable_map[self.left]
         r = self.right if self.right not in variable_map else variable_map[self.right]
         variable_map[self.target] = l + "*" + r
@@ -224,6 +228,7 @@ class DIVInstruction(Instruction):
         self.left = values[-2]
         self.right = values[-1]
 
+    def refresh_variable(self, variable_map):
         l = self.left if self.left not in variable_map else variable_map[self.left]
         r = self.right if self.right not in variable_map else variable_map[self.right]
         variable_map[self.target] = "(" + l + "/" + r + ")"
@@ -244,6 +249,7 @@ class SEXTInstruction(Instruction):
         self.target = values[0]
         self.source = values[4]
 
+    def refresh_variable(self, variable_map):
         variable_map[self.target] = variable_map[self.source]
 
     def __str__(self):
@@ -262,6 +268,7 @@ class TRUNCInstruction(Instruction):
         self.target = values[0]
         self.source = values[4]
 
+    def refresh_variable(self, variable_map):
         variable_map[self.target] = variable_map[self.source]
 
     def __str__(self):

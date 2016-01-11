@@ -1,20 +1,36 @@
 import re
 from log import gen_log
+from instruction import InstructionFactory
 
 
 class ExprInterpreter(object):
     methods = []
+    variable_map = {}
+
+    def interpret(self):
+        data = self.load_data("example-list.ll")
+        m = self.get_methods(data)
+        for target in m:
+            commands = self.get_commands(target)
+            for command in commands:
+                instruct = InstructionFactory.parse(command)
+                if instruct:
+                    instruct.refresh_variable(self.variable_map)
+            print(self.variable_map)
+            self.variable_map.clear()
 
     @staticmethod
     def load_data(path):
         with open(path) as f:
             data = f.read()
             gen_log.info("log file " + path + " successfully")
+
         return data
 
     @staticmethod
     def get_methods(source):
         method_pattern = re.compile("(; Function Attrs:.*?)}", re.S)
+
         methods = re.findall(method_pattern, source)
         return methods
 

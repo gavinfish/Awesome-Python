@@ -1,6 +1,5 @@
 from instruction import InstructionFactory
 from exprInterpreter import ExprInterpreter
-from instruction import variable_map
 from instruction import ReturnInstruction
 from instruction import Instruction
 from log import gen_log
@@ -16,7 +15,6 @@ def test_basic_expression():
             instruct = InstructionFactory.parse(command)
             if isinstance(instruct, ReturnInstruction):
                 print(instruct)
-        gen_log.debug("variable map: " + variable_map.__str__())
 
 
 if __name__ == "__main__":
@@ -52,6 +50,6 @@ define i32 @get_sign(i32 %x) #0 {
     for command in commands:
         print(command)
         instruct = InstructionFactory.parse(command)
-        if isinstance(instruct, ReturnInstruction):
-            print(instruct)
-    print(variable_map)
+
+        # e = ExprInterpreter()
+        # e.interpret()
