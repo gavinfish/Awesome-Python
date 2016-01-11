@@ -5,18 +5,21 @@ from log import gen_log
 class ExprInterpreter(object):
     methods = []
 
-    def load_data(self, path):
+    @staticmethod
+    def load_data(path):
         with open(path) as f:
             data = f.read()
             gen_log.info("log file " + path + " successfully")
         return data
 
-    def get_methods(self, source):
+    @staticmethod
+    def get_methods(source):
         method_pattern = re.compile("(; Function Attrs:.*?)}", re.S)
         methods = re.findall(method_pattern, source)
         return methods
 
-    def get_method_name(self, method):
+    @staticmethod
+    def get_method_name(method):
         name_pattern = re.compile("@.*?\(")
         result = re.search(name_pattern, method)
         if not result:
@@ -25,7 +28,8 @@ class ExprInterpreter(object):
             name = result.group()[1:-1]
             return name
 
-    def get_commands(self, method):
+    @staticmethod
+    def get_commands(method):
         body_pattern = re.compile("{\n.*", re.S)
         result = re.search(body_pattern, method)
         commands_list = []
