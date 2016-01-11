@@ -210,6 +210,7 @@ class SEXTInstruction(Instruction):
         description = "sext from " + self.source + " to " + self.target
         return description
 
+
 class TRUNCInstruction(Instruction):
     # Example: %5 = trunc i64 %4 to i32
     target = ""

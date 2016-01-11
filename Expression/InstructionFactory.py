@@ -11,6 +11,7 @@ class InstructionFactory(object):
             last_comma_index = instruct.rindex(",")
             instruct = instruct[:last_comma_index]
         except ValueError:
+            # Nope, it is ok to have no comma
             None
         # Remove excess commas
         instruct = instruct.replace(",", "")

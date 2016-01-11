@@ -1,4 +1,5 @@
 import re
+from log import gen_log
 
 
 class ExprInterpreter(object):
@@ -7,6 +8,7 @@ class ExprInterpreter(object):
     def load_data(self, path):
         with open(path) as f:
             data = f.read()
+            gen_log.info("log file " + path + " successfully")
         return data
 
     def get_methods(self, source):
@@ -18,7 +20,7 @@ class ExprInterpreter(object):
         name_pattern = re.compile("@.*?\(")
         result = re.search(name_pattern, method)
         if not result:
-            print("cannot find method name in method: " + method)
+            gen_log.error("cannot find method name in method: " + method)
         else:
             name = result.group()[1:-1]
             return name
@@ -28,7 +30,7 @@ class ExprInterpreter(object):
         result = re.search(body_pattern, method)
         commands_list = []
         if not result:
-            print("cannot find commands in method: " + method)
+            gen_log.error("cannot find commands in method: " + method)
         else:
             commands = result.group()[2:]
             commands_list = commands.split("\n")
