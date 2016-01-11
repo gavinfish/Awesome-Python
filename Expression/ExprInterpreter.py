@@ -5,7 +5,7 @@ class ExprInterpreter(object):
     methods = []
 
     def load_data(self, path):
-        with open("assembly.ll") as f:
+        with open(path) as f:
             data = f.read()
         return data
 
@@ -23,22 +23,15 @@ class ExprInterpreter(object):
             name = result.group()[1:-1]
             return name
 
-    def get_commands(self, methd):
+    def get_commands(self, method):
         body_pattern = re.compile("{\n.*", re.S)
-        result = re.search(body_pattern, methd)
+        result = re.search(body_pattern, method)
+        commands_list = []
         if not result:
-            print("cannot find commands in method: " + methd)
+            print("cannot find commands in method: " + method)
         else:
             commands = result.group()[2:]
             commands_list = commands.split("\n")
-            return commands_list
-
-
-
-if __name__ == "__main__":
-    expreinter = ExprInterpreter()
-    data = expreinter.load_data("")
-    m = expreinter.get_methods(data)
-    target = m[0]
-    commands = expreinter.get_commands(target)
-    print(commands)
+            # Skip blank line
+            commands_list = [line for line in commands_list if line]
+        return commands_list

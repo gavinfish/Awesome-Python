@@ -2,6 +2,7 @@
 #  int r = x+10;
 #  return r;
 #}
+; Function Attrs: nounwind uwtable
 define i32 @get_sign(i32 %x) #0 {
   %1 = alloca i32, align 4
   %r = alloca i32, align 4
@@ -12,6 +13,7 @@ define i32 @get_sign(i32 %x) #0 {
   %4 = load i32* %r, align 4, !dbg !132
   ret i32 %4, !dbg !132
 }
+
 
 #int get_sign(int x){
 #  int r = x-12;
@@ -28,6 +30,7 @@ define i32 @get_sign(i32 %x) #0 {
   %4 = load i32* %r, align 4, !dbg !132
   ret i32 %4, !dbg !132
 }
+
 
 #int get_sign(int x){
 #  int r = x*123333333333;
@@ -47,22 +50,23 @@ define i32 @get_sign(i32 %x) #0 {
   ret i32 %6, !dbg !132
 }
 
-# float get_sign(int x){
-#  float r = x/12.2;
+
+# int get_sign(int x) {
+#  int r = x/12;
 #  return r;
 #}
 ; Function Attrs: nounwind uwtable
-define float @get_sign(i32 %x) #0 {
+define i32 @get_sign(i32 %x) #0 {
   %1 = alloca i32, align 4
-  %r = alloca float, align 4
+  %r = alloca i32, align 4
   store i32 %x, i32* %1, align 4
-  %2 = load i32* %1, align 4, !dbg !132
-  %3 = sitofp i32 %2 to double, !dbg !132
-  %4 = fdiv double %3, 1.220000e+01, !dbg !132
-  %5 = fptrunc double %4 to float, !dbg !132
-  store float %5, float* %r, align 4, !dbg !132
-  %6 = load float* %r, align 4, !dbg !133
-  ret float %6, !dbg !133
+  %2 = load i32* %1, align 4, !dbg !123
+  %int_cast_to_i64 = zext i32 12 to i64
+  call void @klee_div_zero_check(i64 %int_cast_to_i64), !dbg !123
+  %3 = sdiv i32 %2, 12, !dbg !123
+  store i32 %3, i32* %r, align 4, !dbg !123
+  %4 = load i32* %r, align 4, !dbg !124
+  ret i32 %4, !dbg !124
 }
 
 

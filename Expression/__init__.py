@@ -1,10 +1,16 @@
 from InstructionFactory import InstructionFactory
+from ExprInterpreter import ExprInterpreter
+from Instruction import variable_map
+from Instruction import ReturnInstruction
+from Instruction import Instruction
 
 if __name__ == "__main__":
-    commands = ['  %1 = alloca i32, align 4', '  %r = alloca i32, align 4', '  store i32 %x, i32* %1, align 4',
-                '  %2 = load i32* %1, align 4, !dbg !131', '  %3 = add nsw i32 %2, 10, !dbg !131',
-                '  store i32 %3, i32* %r, align 4, !dbg !131', '  %4 = load i32* %r, align 4, !dbg !132',
-                '  ret i32 %4, !dbg !132', '']
-    command = commands[0]
-    instruct = InstructionFactory.parse(command)
-    print(instruct)
+    interpreter = ExprInterpreter()
+    data = interpreter.load_data("example-list.ll")
+    m = interpreter.get_methods(data)
+    for target in m:
+        commands = interpreter.get_commands(target)
+        for command in commands:
+            instruct = InstructionFactory.parse(command)
+            if isinstance(instruct,ReturnInstruction):
+                print(instruct)
