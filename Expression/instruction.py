@@ -1,5 +1,4 @@
 from enum import Enum
-from collections import namedtuple
 
 
 class InstructType(Enum):
@@ -79,10 +78,6 @@ class InstructionFactory(object):
 class AllocateInstruction(Instruction):
     # Example: %1 = alloca i32 align 4
 
-    target = ""
-    type = ""
-    align_width = 0
-
     def __init__(self, values):
         self.target = values[0]
         self.type = values[3]
@@ -98,11 +93,6 @@ class AllocateInstruction(Instruction):
 
 class StoreInstruction(Instruction):
     # Example: store i32 %x i32* %1 align 4
-    source = ""
-    source_type = ""
-    target = ""
-    target_type = ""
-    align_width = 0
 
     def __init__(self, values):
         self.source = values[2]
@@ -125,11 +115,6 @@ class StoreInstruction(Instruction):
 class LoadInstruction(Instruction):
     # Example: %2 = load i32* %1 align 4
 
-    target = ""
-    source = ""
-    source_type = ""
-    aligh_width = 0
-
     def __init__(self, values):
         self.target = values[0]
         self.source = values[4]
@@ -146,9 +131,6 @@ class LoadInstruction(Instruction):
 
 class ReturnInstruction(Instruction):
     # Example: ret i32 %4
-
-    target = ""
-    type = ""
 
     def __init__(self, values):
         self.target = values[-1]
@@ -168,10 +150,6 @@ class ReturnInstruction(Instruction):
 
 class ADDInstruction(Instruction):
     #  Example: %3 = add nsw i32 %2 10
-    left = ""
-    right = ""
-    type = ""
-    target = ""
 
     def __init__(self, values):
         self.target = values[0]
@@ -190,10 +168,6 @@ class ADDInstruction(Instruction):
 
 class SUBInstruction(Instruction):
     # Example: %3 = sub nsw i32 %2 12
-    left = ""
-    right = ""
-    type = ""
-    target = ""
 
     def __init__(self, values):
         self.target = values[0]
@@ -212,10 +186,6 @@ class SUBInstruction(Instruction):
 
 class MULInstruction(Instruction):
     # Example:   %4 = mul nsw i64 %3 123333333333
-    left = ""
-    right = ""
-    type = ""
-    target = ""
 
     def __init__(self, values):
         self.target = values[0]
@@ -234,10 +204,6 @@ class MULInstruction(Instruction):
 
 class DIVInstruction(Instruction):
     # Example: %3 = sdiv i32 %2 12
-    left = ""
-    right = ""
-    type = ""
-    target = ""
 
     def __init__(self, values):
         self.target = values[0]
@@ -256,10 +222,6 @@ class DIVInstruction(Instruction):
 
 class SEXTInstruction(Instruction):
     # Example: %3 = sext i32 %2 to i64
-    target = ""
-    target_type = ""
-    source = ""
-    source_type = ""
 
     def __init__(self, values):
         self.target = values[0]
@@ -275,10 +237,6 @@ class SEXTInstruction(Instruction):
 
 class TRUNCInstruction(Instruction):
     # Example: %5 = trunc i64 %4 to i32
-    target = ""
-    target_type = ""
-    source = ""
-    source_type = ""
 
     def __init__(self, values):
         self.target = values[0]
