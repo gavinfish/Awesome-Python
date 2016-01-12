@@ -18,7 +18,7 @@ class PiecewiseContext(object):
             instruct = InstructionFactory.parse(command)
             self.instructs.append(command)
             if instruct:
-                # instruct.refresh_variable(self.variable_map)
+                # Record br and label instruction
                 if isinstance(instruct, BRInstruction):
                     self.brs_index.append(i)
                 elif isinstance(instruct, LABELInstruction):
@@ -27,12 +27,16 @@ class PiecewiseContext(object):
             else:
                 gen_log.warning("cannot parse command: " + command)
 
-        # Load all commands before the first branch
+        # Add stop label index
+        self.labels_index.append(len(commands))
+
+        # Load and parse all commands before the first br instruction
         for i in range(self.brs_index[0] + 1):
             instruct = InstructionFactory.parse(self.instructs[i])
             if instruct:
                 instruct.refresh_variable(self.variable_map)
 
+        # Make copy for the values since they have to been changed in different branches
         temp_map = copy.deepcopy(self.variable_map)
         self.__scan_util_br(self.brs_index[0], temp_map)
 
@@ -49,10 +53,12 @@ class PiecewiseContext(object):
             result = cmp.replace("<", ">=")
         return result
 
+    # Deal with the br instruction
     def __scan_util_br(self, br_index, vmap):
         br = InstructionFactory.parse(self.instructs[br_index])
         br.refresh_variable(vmap)
         if not br.isdirect():
+            # Deal with different branches
             first_label = br.first_label
             second_label = br.second_label
             temp_map = copy.deepcopy(vmap)
@@ -65,23 +71,25 @@ class PiecewiseContext(object):
                 # print(second_result + "," + self.reverse_cmp_condition(br.cmp))
                 # TODO Adjust to support more than two branches
                 print(second_result)
+        else:
+            return self.__scan_instructs_left(br.target, vmap)
 
+    # Deal with instructions from the label that br instruction points to util next label
     def __scan_instructs_left(self, label, temp_map):
         for i in range(self.labels[label], self.__get_next_label_index(label)):
             instruct = InstructionFactory.parse(self.instructs[i])
             if instruct:
                 instruct.refresh_variable(temp_map)
+                # If there is still br instructions, recursive solution
                 if isinstance(instruct, BRInstruction):
                     if instruct.isdirect():
-                        for j in range(self.labels[instruct.target], len(self.instructs)):
-                            instruct = InstructionFactory.parse(self.instructs[j])
-                            if instruct:
-                                instruct.refresh_variable(temp_map)
-                            if isinstance(instruct, ReturnInstruction):
-                                return instruct.result
+                        return self.__scan_instructs_left(instruct.target, temp_map)
                     else:
                         self.__scan_util_br(i, temp_map)
+                elif isinstance(instruct, ReturnInstruction):
+                    return instruct.result
 
+    # Get the index of the the next label
     def __get_next_label_index(self, label_num):
         index = self.labels_index.index(self.labels[label_num])
         return self.labels_index[index + 1]
