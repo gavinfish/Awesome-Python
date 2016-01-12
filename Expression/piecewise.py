@@ -33,21 +33,7 @@ class PiecewiseContext(object):
             if instruct:
                 instruct.refresh_variable(self.variable_map)
 
-        # for i in self.brs_index:
-        #     temp_map = copy.deepcopy(self.variable_map)
-        #     print(temp_map)
-        #     br = InstructionFactory.parse(self.instructs[i])
-        #     if not br.isdirect():
-        #         first_label = br.first_label
-        #         second_label = br.second_label
-        #         first_result = self.__scan_instructs_left(first_label, temp_map)
-        #         second_result = self.__scan_instructs_left(second_label, temp_map)
-        #         print(first_result + "," + br.cmp)
-        #         if second_result:
-        #             print(second_result + "," + self.reverse_cmp_condition(br.cmp))
-        #     print(temp_map)
         temp_map = copy.deepcopy(self.variable_map)
-        # for i in self.brs_index:
         self.__scan_util_br(self.brs_index[0], temp_map)
 
     @staticmethod
@@ -64,20 +50,23 @@ class PiecewiseContext(object):
         return result
 
     def __scan_util_br(self, br_index, vmap):
-        temp_map = copy.deepcopy(vmap)
         br = InstructionFactory.parse(self.instructs[br_index])
+        br.refresh_variable(vmap)
         if not br.isdirect():
             first_label = br.first_label
             second_label = br.second_label
+            temp_map = copy.deepcopy(vmap)
             first_result = self.__scan_instructs_left(first_label, temp_map)
+            temp_map = copy.deepcopy(vmap)
             second_result = self.__scan_instructs_left(second_label, temp_map)
             if first_result:
                 print(first_result + "," + br.cmp)
             if second_result:
-                print(second_result + "," + self.reverse_cmp_condition(br.cmp))
+                # print(second_result + "," + self.reverse_cmp_condition(br.cmp))
+                # TODO Adjust to support more than two branches
+                print(second_result)
 
     def __scan_instructs_left(self, label, temp_map):
-        t = copy.deepcopy(temp_map)
         for i in range(self.labels[label], self.__get_next_label_index(label)):
             instruct = InstructionFactory.parse(self.instructs[i])
             if instruct:
@@ -89,10 +78,9 @@ class PiecewiseContext(object):
                             if instruct:
                                 instruct.refresh_variable(temp_map)
                             if isinstance(instruct, ReturnInstruction):
-                                print(temp_map)
                                 return instruct.result
                     else:
-                        self.__scan_util_br(i, t)
+                        self.__scan_util_br(i, temp_map)
 
     def __get_next_label_index(self, label_num):
         index = self.labels_index.index(self.labels[label_num])
