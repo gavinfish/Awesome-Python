@@ -1,4 +1,5 @@
 from enum import Enum
+from collections import namedtuple
 
 
 class InstructType(Enum):
@@ -18,6 +19,11 @@ class InstructType(Enum):
     SEXT = "sext"
     TRUNC = "trunc"
 
+    # Piecewise
+    LABEL = "preds"  # This is very dangerous since this key word may be used any where
+    BR = "br"
+    CMP = "icmp"
+
 
 class Instruction(object):
     def refresh_variable(self, variable_map):
@@ -31,7 +37,7 @@ class InstructionFactory(object):
         instruct = instruct.strip()
         # Remove debug info
         try:
-            last_comma_index = instruct.rindex(",")
+            last_comma_index = instruct.rindex("!dbg")
             instruct = instruct[:last_comma_index]
         except ValueError:
             # Nope, it is ok to have no comma
@@ -39,7 +45,7 @@ class InstructionFactory(object):
         # Remove excess commas
         instruct = instruct.replace(",", "")
 
-        parts = instruct.strip().split(" ")
+        parts = instruct.strip().split()
         for i in InstructType:
             if i.value in parts:
                 if i is InstructType.ALLOCATE:
@@ -62,6 +68,12 @@ class InstructionFactory(object):
                     return SEXTInstruction(parts)
                 elif i is InstructType.TRUNC:
                     return TRUNCInstruction(parts)
+                elif i is InstructType.LABEL:
+                    return LABELInstruction(parts)
+                elif i is InstructType.BR:
+                    return BRInstruction(parts)
+                elif i is InstructType.CMP:
+                    return CMPInstruction(parts)
 
 
 class AllocateInstruction(Instruction):
@@ -101,7 +113,9 @@ class StoreInstruction(Instruction):
 
     def refresh_variable(self, variable_map):
         r = self.source if self.source not in variable_map else variable_map[self.source]
-        variable_map[self.target] = variable_map[self.target].replace(self.target, r)
+        # variable_map[self.target] = variable_map[self.target].replace(self.target, r)
+        # TODO recheck if it is safe
+        variable_map[self.target] = r
 
     def __str__(self):
         description = "store " + self.source + " to " + self.target
@@ -139,15 +153,17 @@ class ReturnInstruction(Instruction):
     def __init__(self, values):
         self.target = values[-1]
         self.type = values[1]
+        self.result = ""
+
+    def refresh_variable(self, variable_map):
+        description = "return " + self.target
+        expression = variable_map[self.target].replace("%", "")
+        if expression[0] is "(" and expression[-1] is ")":
+            expression = expression[1:-1]
+        self.result = "y = " + expression
 
     def __str__(self):
-        # description = "return " + self.target
-        # expression = variable_map[self.target].replace("%", "")
-        # if expression[0] is "(" and expression[-1] is ")":
-        #     expression = expression[1:-1]
-        # description = "y = " + expression
-        description = ""
-        return description
+        return self.result
 
 
 class ADDInstruction(Instruction):
@@ -273,4 +289,76 @@ class TRUNCInstruction(Instruction):
 
     def __str__(self):
         description = "truncate from " + self.source + " to " + self.target
+        return description
+
+
+class LABELInstruction(Instruction):
+    # Example: ; <label>:11                                      ; preds = %9, %7
+
+    def __init__(self, values):
+        self.num = 0
+        self.preds = []
+
+        self.num = values[1].split(":")[-1]
+        for i in range(values.index("=") + 1, len(values)):
+            self.preds.append(values[i][1:])
+
+    def __str__(self):
+        description = "label " + self.num + " with preds " + ",".join(self.preds)
+        return description
+
+
+class BRInstruction(Instruction):
+    # Example1: br i1 %5 label %7 label %9
+    # Example2: br label %11
+
+    # The shortest br instruction is like "br label num"
+    SHORT_LENGTH = 3
+
+    # If the br instruction just for jumping to a label
+    def isdirect(self):
+        return self.is_direct
+
+    def __init__(self, values):
+        if len(values) == self.SHORT_LENGTH:
+            self.is_direct = True
+            self.target = values[-1][1:]
+        else:
+            self.is_direct = False
+            self.cmp = values[2]
+            self.first_label = values[4][1:]
+            self.second_label = values[-1][1:]
+
+    def refresh_variable(self, variable_map):
+        if not self.isdirect():
+            self.cmp = self.cmp if self.cmp not in variable_map else variable_map[self.cmp].replace("%", "")
+
+    def __str__(self):
+        if self.isdirect():
+            description = "this is  a direct br instruction to label " + self.target
+        else:
+            description = "this is a br instruction to label " + self.first_label + " or label " + self.second_label + " based on " + self.cmp
+        return description
+
+
+CMP_translate_map = {"slt": "<", "sgt": ">"}
+
+
+class CMPInstruction(Instruction):
+    # Example: %5 = icmp slt i32 %4 %5
+
+    def __init__(self, values):
+        self.target = values[0]
+        self.type = values[3]
+        self.left = values[-2]
+        self.right = values[-1]
+
+    def refresh_variable(self, variable_map):
+        self.left = self.left if self.left not in variable_map else variable_map[self.left]
+        self.right = self.right if self.right not in variable_map else variable_map[self.right]
+
+        variable_map[self.target] = self.left + CMP_translate_map[self.type] + self.right
+
+    def __str__(self):
+        description = " ".join(["check if", self.left, CMP_translate_map[self.type], self.right]).replace("%", "")
         return description

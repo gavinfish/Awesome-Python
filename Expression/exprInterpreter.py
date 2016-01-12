@@ -1,6 +1,7 @@
 import re
 from log import gen_log
 from instruction import InstructionFactory
+from instruction import ReturnInstruction
 
 
 class ExprInterpreter(object):
@@ -16,7 +17,8 @@ class ExprInterpreter(object):
                 instruct = InstructionFactory.parse(command)
                 if instruct:
                     instruct.refresh_variable(self.variable_map)
-            print(self.variable_map)
+                if isinstance(instruct,ReturnInstruction):
+                    print(instruct)
             self.variable_map.clear()
 
     @staticmethod

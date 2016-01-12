@@ -3,6 +3,7 @@ from exprInterpreter import ExprInterpreter
 from instruction import ReturnInstruction
 from instruction import Instruction
 from log import gen_log
+from piecewise import PiecewiseContext
 
 
 def test_basic_expression():
@@ -47,9 +48,9 @@ define i32 @get_sign(i32 %x) #0 {
 }'''
     m = ExprInterpreter.get_methods(data)
     commands = ExprInterpreter.get_commands(m[0])
-    for command in commands:
-        print(command)
-        instruct = InstructionFactory.parse(command)
+    context = PiecewiseContext()
+    context.interpret(commands)
+    print(context.variable_map)
 
-        # e = ExprInterpreter()
-        # e.interpret()
+    # e = ExprInterpreter()
+    # e.interpret()
