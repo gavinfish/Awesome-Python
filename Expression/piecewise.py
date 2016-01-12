@@ -31,8 +31,21 @@ class PiecewiseContext(object):
                 second_label = br.second_label
                 first_result = self.__scan_instructs_next(first_label)
                 second_result = self.__scan_instructs_next(second_label)
-                print(first_result+","+br.cmp)
-                print(second_result)
+                print(first_result + "," + br.cmp)
+                print(second_result + "," + self.reverse_cmp_condition(br.cmp))
+
+    @staticmethod
+    def reverse_cmp_condition(cmp):
+        result = ""
+        if ">=" in cmp:
+            result = cmp.replace(">=", "<")
+        elif "=<" in cmp:
+            result = cmp.replace("<=", ">")
+        elif ">" in cmp:
+            result = cmp.replace(">", "<=")
+        elif "<" in cmp:
+            result = cmp.replace("<", ">=")
+        return result
 
     def __scan_instructs_next(self, label):
         for i in range(self.labels[label], self.__get_next_label_index(label)):
