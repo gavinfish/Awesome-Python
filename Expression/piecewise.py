@@ -2,6 +2,9 @@ from instruction import *
 from log import gen_log
 import copy
 
+# This should be in order, preventing missing two char cmp
+CMP_LIST = ["<=", ">=", "==", "!=", "<", ">"]
+
 
 class PiecewiseContext(object):
     def __init__(self):
@@ -64,16 +67,32 @@ class PiecewiseContext(object):
 
     # Deal with the br instruction
     def __scan_util_br(self, br_index, vmap):
+        gen_log.debug(vmap)
         br = InstructionFactory.parse(self.commands[br_index])
         br.refresh_variable(vmap)
         if not br.isdirect():
-            # Deal with different branches
-            first_label = br.first_label
-            second_label = br.second_label
-            temp_map = copy.deepcopy(vmap)
-            first_result = self.__scan_instructs_left(first_label, temp_map)
-            temp_map = copy.deepcopy(vmap)
-            second_result = self.__scan_instructs_left(second_label, temp_map)
+            gen_log.debug(br.cmp)
+            result = self.is_cmp_valid(br.cmp)
+            first_result = None
+            second_result = None
+            if result[0]:
+                cmp_result = self.is_cmp_true(result[1], result[2], result[3])
+                if cmp_result:
+                    first_label = br.first_label
+                    temp_map = copy.deepcopy(vmap)
+                    first_result = self.__scan_instructs_left(first_label, temp_map)
+                else:
+                    second_label = br.second_label
+                    temp_map = copy.deepcopy(vmap)
+                    second_result = self.__scan_instructs_left(second_label, temp_map)
+            else:
+                # Deal with different branches
+                first_label = br.first_label
+                second_label = br.second_label
+                temp_map = copy.deepcopy(vmap)
+                first_result = self.__scan_instructs_left(first_label, temp_map)
+                temp_map = copy.deepcopy(vmap)
+                second_result = self.__scan_instructs_left(second_label, temp_map)
             if first_result:
                 print(first_result + "," + br.cmp)
             if second_result:
@@ -82,6 +101,38 @@ class PiecewiseContext(object):
                 print(second_result)
         else:
             return self.__scan_instructs_left(br.target, vmap)
+
+    # Check if cmp is computable, not containing variable
+    @staticmethod
+    def is_cmp_valid(cmp_str):
+        for cmp in CMP_LIST:
+            if cmp in cmp_str:
+                parts = cmp_str.split(cmp)
+                left = parts[0]
+                right = parts[1]
+                if left.isdecimal() and right.isdecimal():
+                    # Result like this is disgusting, but it just works
+                    return [True, cmp, left, right]
+                return [False, cmp, left, right]
+        gen_log.debug("There is no match cmp in " + cmp_str)
+        return [False, None, None, None]
+
+    @staticmethod
+    def is_cmp_true(cmp, left, right):
+        if "<=" == cmp:
+            return float(left) <= float(right)
+        elif ">=" == cmp:
+            return float(left) >= float(right)
+        elif "==" == cmp:
+            return float(left) == float(right)
+        elif "!=" == cmp:
+            return float(left) != float(right)
+        elif "<" == cmp:
+            return float(left) < float(right)
+        elif ">" == cmp:
+            return float(left) > float(right)
+        else:
+            return None
 
     # Deal with instructions from the label that br instruction points to util next label
     def __scan_instructs_left(self, label, temp_map):
