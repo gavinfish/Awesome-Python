@@ -6,7 +6,7 @@ import copy
 class PiecewiseContext(object):
     def __init__(self):
         self.variable_map = {}
-        self.instructs = []
+        self.commands = []
         # {label num:instructions index}
         self.labels = {}
         self.brs_index = []
@@ -16,7 +16,7 @@ class PiecewiseContext(object):
         # Scan all the commands to get the structure
         for i, command in enumerate(commands):
             instruct = InstructionFactory.parse(command)
-            self.instructs.append(command)
+            self.commands.append(command)
             if instruct:
                 # Record br and label instruction
                 if isinstance(instruct, BRInstruction):
@@ -30,15 +30,24 @@ class PiecewiseContext(object):
         # Add stop label index
         self.labels_index.append(len(commands))
 
-        # Load and parse all commands before the first br instruction
-        for i in range(self.brs_index[0] + 1):
-            instruct = InstructionFactory.parse(self.instructs[i])
-            if instruct:
-                instruct.refresh_variable(self.variable_map)
+        if self.brs_index:
+            # Load and parse all commands before the first br instruction
+            for i in range(self.brs_index[0] + 1):
+                instruct = InstructionFactory.parse(self.commands[i])
+                if instruct:
+                    instruct.refresh_variable(self.variable_map)
 
-        # Make copy for the values since they have to been changed in different branches
-        temp_map = copy.deepcopy(self.variable_map)
-        self.__scan_util_br(self.brs_index[0], temp_map)
+            # Make copy for the values since they have to been changed in different branches
+            temp_map = copy.deepcopy(self.variable_map)
+            self.__scan_util_br(self.brs_index[0], temp_map)
+        else:
+            # Expression without branches
+            for command in self.commands:
+                instruct = InstructionFactory.parse(command)
+                if instruct:
+                    instruct.refresh_variable(self.variable_map)
+                    if isinstance(instruct, ReturnInstruction):
+                        print(instruct)
 
     @staticmethod
     def reverse_cmp_condition(cmp):
@@ -55,7 +64,7 @@ class PiecewiseContext(object):
 
     # Deal with the br instruction
     def __scan_util_br(self, br_index, vmap):
-        br = InstructionFactory.parse(self.instructs[br_index])
+        br = InstructionFactory.parse(self.commands[br_index])
         br.refresh_variable(vmap)
         if not br.isdirect():
             # Deal with different branches
@@ -77,7 +86,7 @@ class PiecewiseContext(object):
     # Deal with instructions from the label that br instruction points to util next label
     def __scan_instructs_left(self, label, temp_map):
         for i in range(self.labels[label], self.__get_next_label_index(label)):
-            instruct = InstructionFactory.parse(self.instructs[i])
+            instruct = InstructionFactory.parse(self.commands[i])
             if instruct:
                 # If there is still br instructions, recursive solution
                 if isinstance(instruct, BRInstruction):
