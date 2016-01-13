@@ -13,6 +13,8 @@ class InstructType(Enum):
     SUB = "sub"
     MUL = "mul"
     DIV = "sdiv"
+    ASHR = "ashr"
+    SHL = "shl"
 
     # Support big number
     SEXT = "sext"
@@ -73,6 +75,10 @@ class InstructionFactory(object):
                     return BRInstruction(parts)
                 elif i is InstructType.CMP:
                     return CMPInstruction(parts)
+                elif i is InstructType.SHL:
+                    return SHLInstruction(parts)
+                elif i is InstructType.ASHR:
+                    return ASHRInstruction(parts)
 
 
 class AllocateInstruction(Instruction):
@@ -299,7 +305,7 @@ class BRInstruction(Instruction):
         return description
 
 
-CMP_translate_map = {"slt": "<", "sgt": ">","sle":"<=","sge":">=","eq":"==","ne":"!="}
+CMP_translate_map = {"slt": "<", "sgt": ">", "sle": "<=", "sge": ">=", "eq": "==", "ne": "!="}
 
 
 class CMPInstruction(Instruction):
@@ -319,4 +325,42 @@ class CMPInstruction(Instruction):
 
     def __str__(self):
         description = " ".join(["check if", self.left, CMP_translate_map[self.type], self.right]).replace("%", "")
+        return description
+
+
+class ASHRInstruction(Instruction):
+    # Example: %3 = ashr i32 %2 5
+
+    def __init__(self, values):
+        self.target = values[0]
+        self.left = values[-2]
+        self.right = values[-1]
+
+    def refresh_variable(self, variable_map):
+        self.left = self.left if self.left not in variable_map else variable_map[self.left]
+        self.right = self.right if self.right not in variable_map else variable_map[self.right]
+
+        variable_map[self.target] = "(" + self.left + ">>" + self.right + ")"
+
+    def __str__(self):
+        description = self.left + ">>" + self.right
+        return description
+
+
+class SHLInstruction(Instruction):
+    # Example: %8 = shl i32 %7 3
+
+    def __init__(self, values):
+        self.target = values[0]
+        self.left = values[-2]
+        self.right = values[-1]
+
+    def refresh_variable(self, variable_map):
+        self.left = self.left if self.left not in variable_map else variable_map[self.left]
+        self.right = self.right if self.right not in variable_map else variable_map[self.right]
+
+        variable_map[self.target] = "(" + self.left + "<<" + self.right + ")"
+
+    def __str__(self):
+        description = self.left + "<<" + self.right
         return description
