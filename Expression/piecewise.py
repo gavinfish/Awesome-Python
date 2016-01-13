@@ -79,15 +79,13 @@ class PiecewiseContext(object):
         for i in range(self.labels[label], self.__get_next_label_index(label)):
             instruct = InstructionFactory.parse(self.instructs[i])
             if instruct:
-                instruct.refresh_variable(temp_map)
                 # If there is still br instructions, recursive solution
                 if isinstance(instruct, BRInstruction):
-                    if instruct.isdirect():
-                        return self.__scan_instructs_left(instruct.target, temp_map)
-                    else:
-                        self.__scan_util_br(i, temp_map)
-                elif isinstance(instruct, ReturnInstruction):
-                    return instruct.result
+                    return self.__scan_util_br(i, temp_map)
+                else:
+                    instruct.refresh_variable(temp_map)
+                    if isinstance(instruct, ReturnInstruction):
+                        return instruct.result
 
     # Get the index of the the next label
     def __get_next_label_index(self, label_num):

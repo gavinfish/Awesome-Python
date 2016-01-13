@@ -299,7 +299,7 @@ class BRInstruction(Instruction):
         return description
 
 
-CMP_translate_map = {"slt": "<", "sgt": ">"}
+CMP_translate_map = {"slt": "<", "sgt": ">","sle":"<=","sge":">=","eq":"==","ne":"!="}
 
 
 class CMPInstruction(Instruction):
