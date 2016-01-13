@@ -165,7 +165,12 @@ class ADDInstruction(Instruction):
     def refresh_variable(self, variable_map):
         l = self.left if self.left not in variable_map else variable_map[self.left]
         r = self.right if self.right not in variable_map else variable_map[self.right]
-        variable_map[self.target] = "(" + l + "+" + r + ")"
+        if (str.isdecimal(l) and str.isdecimal(r)) and (
+                    (str.isdecimal(self.left) and not str.isdecimal(self.right)) or (
+                            not str.isdecimal(self.left) and str.isdecimal(self.right))):
+            variable_map[self.target] = str(int(l) + int(r))
+        else:
+            variable_map[self.target] = "(" + l + "+" + r + ")"
 
     def __str__(self):
         description = "(" + self.left + "+" + self.right + ")"
@@ -183,7 +188,12 @@ class SUBInstruction(Instruction):
     def refresh_variable(self, variable_map):
         l = self.left if self.left not in variable_map else variable_map[self.left]
         r = self.right if self.right not in variable_map else variable_map[self.right]
-        variable_map[self.target] = "(" + l + "-" + r + ")"
+        if (str.isdecimal(l) and str.isdecimal(r)) and (
+                    (str.isdecimal(self.left) and not str.isdecimal(self.right)) or (
+                            not str.isdecimal(self.left) and str.isdecimal(self.right))):
+            variable_map[self.target] = str(int(l) - int(r))
+        else:
+            variable_map[self.target] = "(" + l + "-" + r + ")"
 
     def __str__(self):
         description = "(" + self.left + "-" + self.right + ")"
@@ -201,7 +211,12 @@ class MULInstruction(Instruction):
     def refresh_variable(self, variable_map):
         l = self.left if self.left not in variable_map else variable_map[self.left]
         r = self.right if self.right not in variable_map else variable_map[self.right]
-        variable_map[self.target] = l + "*" + r
+        if (str.isdecimal(l) and str.isdecimal(r)) and (
+                    (str.isdecimal(self.left) and not str.isdecimal(self.right)) or (
+                            not str.isdecimal(self.left) and str.isdecimal(self.right))):
+            variable_map[self.target] = str(int(l) * int(r))
+        else:
+            variable_map[self.target] = l + "*" + r
 
     def __str__(self):
         description = "(" + self.left + "*" + self.right + ")"
@@ -219,7 +234,12 @@ class DIVInstruction(Instruction):
     def refresh_variable(self, variable_map):
         l = self.left if self.left not in variable_map else variable_map[self.left]
         r = self.right if self.right not in variable_map else variable_map[self.right]
-        variable_map[self.target] = "(" + l + "/" + r + ")"
+        if (str.isdecimal(l) and str.isdecimal(r)) and (
+                    (str.isdecimal(self.left) and not str.isdecimal(self.right)) or (
+                            not str.isdecimal(self.left) and str.isdecimal(self.right))):
+            variable_map[self.target] = str(int(l) / int(r))
+        else:
+            variable_map[self.target] = l + "/" + r
 
     def __str__(self):
         description = "(" + self.left + "/" + self.right + ")"

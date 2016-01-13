@@ -295,3 +295,41 @@ define i32 @get_sign(i32 %x) #0 {
   %12 = load i32* %r, align 4, !dbg !130
   ret i32 %12, !dbg !130
 }
+
+
+#int get_sign(int x){
+#  int r = 0;
+#  for(int i=0;i<10;++i){
+#    r+=i;
+#  }
+#  return r;
+#}
+; Function Attrs: nounwind uwtable
+define i32 @get_sign(i32 %x) #0 {
+  %1 = alloca i32, align 4
+  %r = alloca i32, align 4
+  %i = alloca i32, align 4
+  store i32 %x, i32* %1, align 4
+  store i32 0, i32* %r, align 4, !dbg !123
+  store i32 0, i32* %i, align 4, !dbg !124
+  br label %2, !dbg !124
+
+; <label>:2                                       ; preds = %5, %0
+  %3 = load i32* %i, align 4, !dbg !124
+  %4 = icmp slt i32 %3, 10, !dbg !124
+  br i1 %4, label %5, label %11, !dbg !124
+
+; <label>:5                                       ; preds = %2
+  %6 = load i32* %i, align 4, !dbg !126
+  %7 = load i32* %r, align 4, !dbg !126
+  %8 = add nsw i32 %7, %6, !dbg !126
+  store i32 %8, i32* %r, align 4, !dbg !126
+  %9 = load i32* %i, align 4, !dbg !124
+  %10 = add nsw i32 %9, 1, !dbg !124
+  store i32 %10, i32* %i, align 4, !dbg !124
+  br label %2, !dbg !124
+
+; <label>:11                                      ; preds = %2
+  %12 = load i32* %r, align 4, !dbg !128
+  ret i32 %12, !dbg !128
+}
