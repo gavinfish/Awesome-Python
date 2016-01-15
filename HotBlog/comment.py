@@ -50,7 +50,7 @@ if count > 50:
     os._exit(0)
 comment = input("请输入自动评论的内容：\n")
 comment_data = {
-    "comment": comment,
+    "content": comment,
 }
 
 print("已经成功评论以下文章：\n")
@@ -79,6 +79,6 @@ for i in range(1, TOTAL_PAGE_COUNT):
             parts = url.split("/")
             username = parts[-4]
             filename = parts[-1]
-            r4 = session.post(comment_url.format(username=username, filename=filename), comment_data)
-            print(r4)
+            target_url = comment_url.format(username=username, filename=filename)
+            r4 = session.post(target_url, comment_data)
             print(title + " : " + url)
