@@ -197,3 +197,139 @@ define i32 @get_sign(i32 %x) #0 {
   %17 = load i32* %r, align 4, !dbg !136
   ret i32 %17, !dbg !136
 }
+
+
+# int get_sign(int x, int z){
+#   int r = x*2;
+#   if(r>=0){
+#     r = r-z;
+#   }
+#   else{
+#     r = r+z;
+#   }
+#   return r;
+# }
+; Function Attrs: nounwind uwtable
+define i32 @get_sign(i32 %x, i32 %z) #0 {
+  %1 = alloca i32, align 4
+  %2 = alloca i32, align 4
+  %r = alloca i32, align 4
+  store i32 %x, i32* %1, align 4
+  store i32 %z, i32* %2, align 4
+  %3 = load i32* %1, align 4, !dbg !123
+  %4 = mul nsw i32 %3, 2, !dbg !123
+  store i32 %4, i32* %r, align 4, !dbg !123
+  %5 = load i32* %r, align 4, !dbg !124
+  %6 = icmp sge i32 %5, 0, !dbg !124
+  %7 = load i32* %r, align 4, !dbg !126
+  %8 = load i32* %2, align 4, !dbg !126
+  br i1 %6, label %9, label %11, !dbg !124
+
+; <label>:9                                       ; preds = %0
+  %10 = sub nsw i32 %7, %8, !dbg !126
+  store i32 %10, i32* %r, align 4, !dbg !126
+  br label %13, !dbg !128
+
+; <label>:11                                      ; preds = %0
+  %12 = add nsw i32 %7, %8, !dbg !129
+  store i32 %12, i32* %r, align 4, !dbg !129
+  br label %13
+
+; <label>:13                                      ; preds = %11, %9
+  %14 = load i32* %r, align 4, !dbg !131
+  ret i32 %14, !dbg !131
+}
+
+
+#int get_sign(int x){
+#  int r = x>>5;
+#  return r;
+#}
+; Function Attrs: nounwind uwtable
+define i32 @get_sign(i32 %x) #0 {
+  %1 = alloca i32, align 4
+  %r = alloca i32, align 4
+  store i32 %x, i32* %1, align 4
+  %2 = load i32* %1, align 4, !dbg !123
+  %int_cast_to_i64 = zext i32 5 to i64
+  call void @klee_overshift_check(i64 32, i64 %int_cast_to_i64), !dbg !123
+  %3 = ashr i32 %2, 5, !dbg !123
+  store i32 %3, i32* %r, align 4, !dbg !123
+  %4 = load i32* %r, align 4, !dbg !124
+  ret i32 %4, !dbg !124
+}
+
+
+#int get_sign(int x){
+#  int r = x+9;
+#  if(x<10){
+#    r=<<3;
+#  }
+#  r = r*8;
+#  return r;
+#}
+; Function Attrs: nounwind uwtable
+define i32 @get_sign(i32 %x) #0 {
+  %1 = alloca i32, align 4
+  %r = alloca i32, align 4
+  store i32 %x, i32* %1, align 4
+  %2 = load i32* %1, align 4, !dbg !123
+  %3 = add nsw i32 %2, 9, !dbg !123
+  store i32 %3, i32* %r, align 4, !dbg !123
+  %4 = load i32* %1, align 4, !dbg !124
+  %5 = icmp slt i32 %4, 10, !dbg !124
+  br i1 %5, label %6, label %9, !dbg !124
+
+; <label>:6                                       ; preds = %0
+  %7 = load i32* %r, align 4, !dbg !126
+  %int_cast_to_i64 = zext i32 3 to i64
+  call void @klee_overshift_check(i64 32, i64 %int_cast_to_i64), !dbg !126
+  %8 = shl i32 %7, 3, !dbg !126
+  store i32 %8, i32* %r, align 4, !dbg !126
+  br label %9, !dbg !128
+
+; <label>:9                                       ; preds = %6, %0
+  %10 = load i32* %r, align 4, !dbg !129
+  %11 = mul nsw i32 %10, 8, !dbg !129
+  store i32 %11, i32* %r, align 4, !dbg !129
+  %12 = load i32* %r, align 4, !dbg !130
+  ret i32 %12, !dbg !130
+}
+
+
+#int get_sign(int x){
+#  int r = 0;
+#  for(int i=0;i<10;++i){
+#    r+=i;
+#  }
+#  return r;
+#}
+; Function Attrs: nounwind uwtable
+define i32 @get_sign(i32 %x) #0 {
+  %1 = alloca i32, align 4
+  %r = alloca i32, align 4
+  %i = alloca i32, align 4
+  store i32 %x, i32* %1, align 4
+  store i32 0, i32* %r, align 4, !dbg !123
+  store i32 0, i32* %i, align 4, !dbg !124
+  br label %2, !dbg !124
+
+; <label>:2                                       ; preds = %5, %0
+  %3 = load i32* %i, align 4, !dbg !124
+  %4 = icmp slt i32 %3, 10, !dbg !124
+  br i1 %4, label %5, label %11, !dbg !124
+
+; <label>:5                                       ; preds = %2
+  %6 = load i32* %i, align 4, !dbg !126
+  %7 = load i32* %r, align 4, !dbg !126
+  %8 = add nsw i32 %7, %6, !dbg !126
+  store i32 %8, i32* %r, align 4, !dbg !126
+  %9 = load i32* %i, align 4, !dbg !124
+  %10 = add nsw i32 %9, 1, !dbg !124
+  store i32 %10, i32* %i, align 4, !dbg !124
+  br label %2, !dbg !124
+
+; <label>:11                                      ; preds = %2
+  %12 = load i32* %r, align 4, !dbg !128
+  ret i32 %12, !dbg !128
+}

@@ -1,25 +1,17 @@
 import re
 from log import gen_log
-from instruction import InstructionFactory
-from instruction import ReturnInstruction
+from piecewise import PiecewiseContext
 
 
 class ExprInterpreter(object):
-    methods = []
-    variable_map = {}
-
     def interpret(self):
-        data = self.load_data("example-list.ll")
-        m = self.get_methods(data)
+        interpreter = ExprInterpreter()
+        data = interpreter.load_data("example-list.ll")
+        m = interpreter.get_methods(data)
         for target in m:
-            commands = self.get_commands(target)
-            for command in commands:
-                instruct = InstructionFactory.parse(command)
-                if instruct:
-                    instruct.refresh_variable(self.variable_map)
-                if isinstance(instruct,ReturnInstruction):
-                    print(instruct)
-            self.variable_map.clear()
+            commands = ExprInterpreter.get_commands(target)
+            context = PiecewiseContext()
+            context.interpret(commands)
 
     @staticmethod
     def load_data(path):

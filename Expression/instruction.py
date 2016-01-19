@@ -13,6 +13,8 @@ class InstructType(Enum):
     SUB = "sub"
     MUL = "mul"
     DIV = "sdiv"
+    ASHR = "ashr"
+    SHL = "shl"
 
     # Support big number
     SEXT = "sext"
@@ -73,6 +75,10 @@ class InstructionFactory(object):
                     return BRInstruction(parts)
                 elif i is InstructType.CMP:
                     return CMPInstruction(parts)
+                elif i is InstructType.SHL:
+                    return SHLInstruction(parts)
+                elif i is InstructType.ASHR:
+                    return ASHRInstruction(parts)
 
 
 class AllocateInstruction(Instruction):
@@ -159,7 +165,12 @@ class ADDInstruction(Instruction):
     def refresh_variable(self, variable_map):
         l = self.left if self.left not in variable_map else variable_map[self.left]
         r = self.right if self.right not in variable_map else variable_map[self.right]
-        variable_map[self.target] = "(" + l + "+" + r + ")"
+        if (str.isdecimal(l) and str.isdecimal(r)) and (
+                    (str.isdecimal(self.left) and not str.isdecimal(self.right)) or (
+                            not str.isdecimal(self.left) and str.isdecimal(self.right))):
+            variable_map[self.target] = str(int(l) + int(r))
+        else:
+            variable_map[self.target] = "(" + l + "+" + r + ")"
 
     def __str__(self):
         description = "(" + self.left + "+" + self.right + ")"
@@ -177,7 +188,12 @@ class SUBInstruction(Instruction):
     def refresh_variable(self, variable_map):
         l = self.left if self.left not in variable_map else variable_map[self.left]
         r = self.right if self.right not in variable_map else variable_map[self.right]
-        variable_map[self.target] = "(" + l + "-" + r + ")"
+        if (str.isdecimal(l) and str.isdecimal(r)) and (
+                    (str.isdecimal(self.left) and not str.isdecimal(self.right)) or (
+                            not str.isdecimal(self.left) and str.isdecimal(self.right))):
+            variable_map[self.target] = str(int(l) - int(r))
+        else:
+            variable_map[self.target] = "(" + l + "-" + r + ")"
 
     def __str__(self):
         description = "(" + self.left + "-" + self.right + ")"
@@ -195,7 +211,12 @@ class MULInstruction(Instruction):
     def refresh_variable(self, variable_map):
         l = self.left if self.left not in variable_map else variable_map[self.left]
         r = self.right if self.right not in variable_map else variable_map[self.right]
-        variable_map[self.target] = l + "*" + r
+        if (str.isdecimal(l) and str.isdecimal(r)) and (
+                    (str.isdecimal(self.left) and not str.isdecimal(self.right)) or (
+                            not str.isdecimal(self.left) and str.isdecimal(self.right))):
+            variable_map[self.target] = str(int(l) * int(r))
+        else:
+            variable_map[self.target] = l + "*" + r
 
     def __str__(self):
         description = "(" + self.left + "*" + self.right + ")"
@@ -213,7 +234,12 @@ class DIVInstruction(Instruction):
     def refresh_variable(self, variable_map):
         l = self.left if self.left not in variable_map else variable_map[self.left]
         r = self.right if self.right not in variable_map else variable_map[self.right]
-        variable_map[self.target] = "(" + l + "/" + r + ")"
+        if (str.isdecimal(l) and str.isdecimal(r)) and (
+                    (str.isdecimal(self.left) and not str.isdecimal(self.right)) or (
+                            not str.isdecimal(self.left) and str.isdecimal(self.right))):
+            variable_map[self.target] = str(int(l) / int(r))
+        else:
+            variable_map[self.target] = l + "/" + r
 
     def __str__(self):
         description = "(" + self.left + "/" + self.right + ")"
@@ -299,7 +325,7 @@ class BRInstruction(Instruction):
         return description
 
 
-CMP_translate_map = {"slt": "<", "sgt": ">","sle":"<=","sge":">=","eq":"==","ne":"!="}
+CMP_translate_map = {"slt": "<", "sgt": ">", "sle": "<=", "sge": ">=", "eq": "==", "ne": "!="}
 
 
 class CMPInstruction(Instruction):
@@ -319,4 +345,42 @@ class CMPInstruction(Instruction):
 
     def __str__(self):
         description = " ".join(["check if", self.left, CMP_translate_map[self.type], self.right]).replace("%", "")
+        return description
+
+
+class ASHRInstruction(Instruction):
+    # Example: %3 = ashr i32 %2 5
+
+    def __init__(self, values):
+        self.target = values[0]
+        self.left = values[-2]
+        self.right = values[-1]
+
+    def refresh_variable(self, variable_map):
+        self.left = self.left if self.left not in variable_map else variable_map[self.left]
+        self.right = self.right if self.right not in variable_map else variable_map[self.right]
+
+        variable_map[self.target] = "(" + self.left + ">>" + self.right + ")"
+
+    def __str__(self):
+        description = self.left + ">>" + self.right
+        return description
+
+
+class SHLInstruction(Instruction):
+    # Example: %8 = shl i32 %7 3
+
+    def __init__(self, values):
+        self.target = values[0]
+        self.left = values[-2]
+        self.right = values[-1]
+
+    def refresh_variable(self, variable_map):
+        self.left = self.left if self.left not in variable_map else variable_map[self.left]
+        self.right = self.right if self.right not in variable_map else variable_map[self.right]
+
+        variable_map[self.target] = "(" + self.left + "<<" + self.right + ")"
+
+    def __str__(self):
+        description = self.left + "<<" + self.right
         return description
