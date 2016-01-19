@@ -1,29 +1,38 @@
 from enum import Enum
 
+ALL_INSTRUCT_TYPE = (
+    "alloca", "store", "load", "ret", "add", "sub", "mul", "fmul", "sdiv", "ashr", "shl", "sext", "trunc", "sitofp",
+    "fptosi", "preds", "br", "icmp", "call")
+
 
 class InstructType(Enum):
     # Basic instruct
-    ALLOCATE = "alloca"
-    STORE = "store"
-    LOAD = "load"
-    RETURN = "ret"
+    ALLOCATE = ("alloca",)
+    STORE = ("store",)
+    LOAD = ("load",)
+    RETURN = ("ret",)
 
     # Operator
-    ADD = "add"
-    SUB = "sub"
-    MUL = "mul"
-    DIV = "sdiv"
-    ASHR = "ashr"
-    SHL = "shl"
+    ADD = ("add",)
+    SUB = ("sub",)
+    MUL = ("mul", "fmul")
+    DIV = ("sdiv",)
+    ASHR = ("ashr",)
+    SHL = ("shl",)
 
     # Support big number
-    SEXT = "sext"
-    TRUNC = "trunc"
+    SEXT = ("sext",)
+    TRUNC = ("trunc",)
+    SITOFP = ("sitofp",)
+    FPTOSI = ("fptosi",)
 
     # Piecewise
-    LABEL = "preds"  # This is very dangerous since this key word may be used any where
-    BR = "br"
-    CMP = "icmp"
+    LABEL = ("preds",)  # This is very dangerous since this key word may be used any where
+    BR = ("br",)
+    CMP = ("icmp",)
+
+    # Math function
+    CALL = ("call",)
 
 
 class Instruction(object):
@@ -47,38 +56,45 @@ class InstructionFactory(object):
         instruct = instruct.replace(",", "")
 
         parts = instruct.strip().split()
-        for i in InstructType:
-            if i.value in parts:
-                if i is InstructType.ALLOCATE:
+        for i in ALL_INSTRUCT_TYPE:
+            if i in parts:
+                if i in InstructType.ALLOCATE.value:
                     return AllocateInstruction(parts)
-                elif i is InstructType.LOAD:
+                elif i in InstructType.LOAD.value:
                     return LoadInstruction(parts)
-                elif i is InstructType.STORE:
+                elif i in InstructType.STORE.value:
                     return StoreInstruction(parts)
-                elif i is InstructType.RETURN:
+                elif i in InstructType.RETURN.value:
                     return ReturnInstruction(parts)
-                elif i is InstructType.ADD:
+                elif i in InstructType.ADD.value:
                     return ADDInstruction(parts)
-                elif i is InstructType.SUB:
+                elif i in InstructType.SUB.value:
                     return SUBInstruction(parts)
-                elif i is InstructType.MUL:
+                elif i in InstructType.MUL.value:
                     return MULInstruction(parts)
-                elif i is InstructType.DIV:
+                elif i in InstructType.DIV.value:
                     return DIVInstruction(parts)
-                elif i is InstructType.SEXT:
-                    return SEXTInstruction(parts)
-                elif i is InstructType.TRUNC:
-                    return TRUNCInstruction(parts)
-                elif i is InstructType.LABEL:
+                elif i in InstructType.LABEL.value:
                     return LABELInstruction(parts)
-                elif i is InstructType.BR:
+                elif i in InstructType.BR.value:
                     return BRInstruction(parts)
-                elif i is InstructType.CMP:
+                elif i in InstructType.CMP.value:
                     return CMPInstruction(parts)
-                elif i is InstructType.SHL:
+                elif i in InstructType.SHL.value:
                     return SHLInstruction(parts)
-                elif i is InstructType.ASHR:
+                elif i in InstructType.SEXT.value:
+                    return SEXTInstruction(parts)
+                elif i in InstructType.TRUNC.value:
+                    return TRUNCInstruction(parts)
+                elif i in InstructType.SITOFP.value:
+                    return SITOFPInstruction(parts)
+                elif i in InstructType.FPTOSI.value:
+                    return FPTOSIInstruction(parts)
+                elif i in InstructType.ASHR.value:
                     return ASHRInstruction(parts)
+                # Ignore call method that doesn't effort variables
+                elif i in InstructType.CALL.value and '=' in parts:
+                    return CALLInstruction(parts)
 
 
 class AllocateInstruction(Instruction):
@@ -276,6 +292,36 @@ class TRUNCInstruction(Instruction):
         return description
 
 
+class SITOFPInstruction(Instruction):
+    # Example: %5 = sitofp i32 %4 to double
+
+    def __init__(self, values):
+        self.target = values[0]
+        self.source = values[4]
+
+    def refresh_variable(self, variable_map):
+        variable_map[self.target] = variable_map[self.source]
+
+    def __str__(self):
+        description = "sitofp from " + self.source + " to " + self.target
+        return description
+
+
+class FPTOSIInstruction(Instruction):
+    # Example: %7 = fptosi double %6 to i32
+
+    def __init__(self, values):
+        self.target = values[0]
+        self.source = values[4]
+
+    def refresh_variable(self, variable_map):
+        variable_map[self.target] = variable_map[self.source]
+
+    def __str__(self):
+        description = "fptosi from " + self.source + " to " + self.target
+        return description
+
+
 class LABELInstruction(Instruction):
     # Example: ; <label>:11                                      ; preds = %9, %7
 
@@ -383,4 +429,28 @@ class SHLInstruction(Instruction):
 
     def __str__(self):
         description = self.left + "<<" + self.right
+        return description
+
+
+class CALLInstruction(Instruction):
+    # Example: %6 = call double @sqrt(double %5) #7
+
+    def __init__(self, values):
+        self.target = values[0]
+        func = values[4]
+        self.name = func[1:func.index('(')]
+        self.argvs = []
+        length = len(values)
+        for i in range(5, length - 2):
+            self.argvs.append(values[i])
+        self.argvs.append(values[(length - 2)][:-1])
+
+    def refresh_variable(self, variable_map):
+        for i, argv in enumerate(self.argvs):
+            self.argvs[i] = argv if argv not in variable_map else variable_map[argv]
+
+        variable_map[self.target] = self.name + "(" + ",".join(self.argvs) + ")"
+
+    def __str__(self):
+        description = self.name + "(" + ",".join(self.argvs) + ")"
         return description
